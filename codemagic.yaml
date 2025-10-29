@@ -19,8 +19,11 @@ workflows:
                      -archivePath build/ARKitPoseStreamer.xcarchive
           xcodebuild -exportArchive \
                      -archivePath build/ARKitPoseStreamer.xcarchive \
-                     -exportOptionsPlist exportOptions.plist \
-                     -exportPath build
+                     -exportPath build \
+                     -allowProvisioningUpdates
+      - name: Verify output
+        script: |
+          echo "Build artifacts:"
+          find build -name "*.ipa" -o -name "*.xcarchive"
     artifacts:
       - build/**/*.ipa
-      - build/**/*.app
