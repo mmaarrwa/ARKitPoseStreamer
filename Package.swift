@@ -9,13 +9,18 @@ let package = Package(
         .iOSApplication(
             name: "ARKitPoseStreamer",
             targets: ["AppModule"],
-            bundleIdentifier: "com.mmaarrwa.ARKitPoseStreamer", // change YOURNAME
+            bundleIdentifier: "com.mmaarrwa.ARKitPoseStreamer",
             teamIdentifier: nil,
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .placeholder,
+            appIcon: .placeholder(icon: .app),   // ✅ fixed
             accentColor: .presetColor(.blue),
-            supportedDeviceFamilies: [.phone]
+            supportedDeviceFamilies: [.phone],
+            supportedInterfaceOrientations: [   // ✅ added this
+                .portrait,
+                .landscapeLeft,
+                .landscapeRight
+            ]
         )
     ],
     targets: [
