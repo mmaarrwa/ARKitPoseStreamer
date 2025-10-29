@@ -3,27 +3,13 @@ workflows:
     name: ARKitPoseStreamer iOS Build
     environment:
       xcode: latest
-      vars:
-        XCODE_SCHEME: "ARKitPoseStreamer"
-        BUNDLE_ID: "com.mmaarrwa.ARKitPoseStreamer"
     scripts:
-      - name: Clean build directory
+      - name: Build iOS app
         script: |
-          rm -rf build
-      - name: Build and export .ipa
-        script: |
-          xcodebuild -scheme "$XCODE_SCHEME" \
-                     -destination 'generic/platform=iOS' \
-                     -configuration Release \
-                     clean archive \
-                     -archivePath build/ARKitPoseStreamer.xcarchive
-          xcodebuild -exportArchive \
-                     -archivePath build/ARKitPoseStreamer.xcarchive \
-                     -exportPath build \
-                     -allowProvisioningUpdates
-      - name: Verify output
-        script: |
-          echo "Build artifacts:"
-          find build -name "*.ipa" -o -name "*.xcarchive"
+          xcode-project build-ipa \
+            --project "ARKitPoseStreamer.xcodeproj" \
+            --scheme "ARKitPoseStreamer" \
+            --destination "generic/platform=iOS"
     artifacts:
-      - build/**/*.ipa
+      - build/ios/ipa/*.ipa
+      - build/ios/xcarchive/*.xcarchive
