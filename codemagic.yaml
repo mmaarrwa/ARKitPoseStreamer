@@ -7,22 +7,20 @@ workflows:
         XCODE_SCHEME: "ARKitPoseStreamer"
         BUNDLE_ID: "com.mmaarrwa.ARKitPoseStreamer"
     scripts:
+      - name: Clean build directory
+        script: |
+          rm -rf build
       - name: Build and export .ipa
         script: |
           xcodebuild -scheme "$XCODE_SCHEME" \
                      -destination 'generic/platform=iOS' \
                      -configuration Release \
                      clean archive \
-                     -archivePath $PWD/build/$XCODE_SCHEME.xcarchive
-
+                     -archivePath build/ARKitPoseStreamer.xcarchive
           xcodebuild -exportArchive \
-                     -archivePath $PWD/build/$XCODE_SCHEME.xcarchive \
+                     -archivePath build/ARKitPoseStreamer.xcarchive \
                      -exportOptionsPlist exportOptions.plist \
-                     -exportPath $PWD/build
-
-      - name: Verify output
-        script: |
-          echo "Produced .ipa files:"
-          find $PWD/build -name "*.ipa"
+                     -exportPath build
     artifacts:
       - build/**/*.ipa
+      - build/**/*.app
