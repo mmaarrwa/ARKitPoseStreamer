@@ -13,7 +13,7 @@ let package = Package(
             teamIdentifier: nil,
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .placeholder(icon: .app),   // ✅ fixed
+            appIcon: .placeholder(icon: .default),   // ✅ fixed
             accentColor: .presetColor(.blue),
             supportedDeviceFamilies: [.phone],
             supportedInterfaceOrientations: [   // ✅ added this
