@@ -4,10 +4,9 @@ import SceneKit
 import simd
 import Combine
 
-final class ARManager: NSObject, ObservableObject, ARSCNViewDelegate {
+final class ARManager: NSObject, ObservableObject, ARSessionDelegate { // Removed ARSCNViewDelegate, added ARSessionDelegate
     static let shared = ARManager()
 
-    // public UI + session object
     let sceneView: ARSCNView = {
         let v = ARSCNView(frame: .zero)
         v.autoenablesDefaultLighting = true
@@ -23,7 +22,7 @@ final class ARManager: NSObject, ObservableObject, ARSCNViewDelegate {
 
     private override init() {
         super.init()
-        sceneView.delegate = self
+        // sceneView.delegate = self  // Remove if not using SceneKit rendering callbacks
         statusText = "Ready"
     }
 
@@ -36,9 +35,8 @@ final class ARManager: NSObject, ObservableObject, ARSCNViewDelegate {
         let config = ARWorldTrackingConfiguration()
         config.worldAlignment = .gravity
         config.planeDetection = []
-        // no scene reconstruction for minimal app; can enable later
         sceneView.session.run(config)
-        sceneView.session.delegate = self
+        sceneView.session.delegate = self  // This now works because we conform to ARSessionDelegate
         started = true
         statusText = "AR running"
     }
@@ -55,10 +53,9 @@ final class ARManager: NSObject, ObservableObject, ARSCNViewDelegate {
         }
     }
 
-    // ARSCNViewDelegate per-frame
-    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+    // ✅ CORRECT: Use ARSessionDelegate method instead of ARSCNViewDelegate
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
         guard isStreaming else { return }
-        guard let frame = sceneView.session.currentFrame else { return }
 
         // get position
         let t = frame.camera.transform
