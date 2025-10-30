@@ -4,56 +4,33 @@ workflows:
     environment:
       xcode: latest
     scripts:
-      - name: Create export options
-        script: | 
-          # This step creates the export-options.plist file on the build server.
-          # This file is REQUIRED by xcodebuild to create an .ipa.
-          # We are using the bundle ID 'com.mmaarrwa.ARKitPoseStreamer'
-          # from your Package.swift file.
-          
-          cat > "$CM_BUILD_DIR/export-options.plist" <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>ad-hoc</string> 
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>com.mmaarrwa.ARKitPoseStreamer</key>
-                  <string>Temporary Profile Name</string>
-              </dict>
-              <key>compileBitcode</key>
-              <false/>
-              <key>stripSwiftSymbols</key>
-              <true/>
-              <key>teamID</key>
-              <string>YOUR_TEAM_ID</string>
-          </dict>
-          </plist>
-          EOF
-          
-          echo "Created export-options.plist"
-
       - name: Build archive
         script: |
-          # This is the new build command. It finds your 'ARKitPoseStreamer'
-          # scheme from your Package.swift and builds an archive.
+          # This step builds the app and creates the .xcarchive
+          # This does not require any code signing.
           xcodebuild archive \
             -scheme "ARKitPoseStreamer" \
             -archivePath "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive" \
             -destination "generic/platform=iOS"
 
-      - name: Export .ipa
+      - name: Create unsigned .ipa
         script: |
-          # This command takes the archive and packages it into the .ipa file.
-          xcodebuild -exportArchive \
-            -archivePath "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive" \
-            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
-            -exportOptionsPlist "$CM_BUILD_DIR/export-options.plist"
+          # This step finds the built .app file inside the archive,
+          # puts it into a "Payload" folder, and zips it
+          # into the final .ipa file. This .ipa is unsigned.
+          
+          # 1. Create the Payload directory
+          mkdir -p "$CM_BUILD_DIR/build/ios/ipa/Payload"
+          
+          # 2. Copy the .app from the archive into the Payload dir
+          cp -r "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive/Products/Applications/ARKitPoseStreamer.app" "$CM_BUILD_DIR/build/ios/ipa/Payload/"
+          
+          # 3. Go into the output directory
+          cd "$CM_BUILD_DIR/build/ios/ipa"
+          
+          # 4. Zip the Payload folder into an .ipa file
+          zip -r "ARKitPoseStreamer.ipa" "Payload"
             
     artifacts:
+      # This tells Codemagic where to find the final .ipa file
       - build/ios/ipa/*.ipa
-      - "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive"
