@@ -4,12 +4,14 @@ workflows:
     environment:
       xcode: latest
     scripts:
+      - name: Generate Xcode project  # <-- ADD THIS SCRIPT
+        script: | 
+          swift package generate-xcodeproj
       - name: Build iOS app
         script: |
           xcode-project build-ipa \
             --project "ARKitPoseStreamer.xcodeproj" \
-            --scheme "ARKitPoseStreamer" \
-            --destination "generic/platform=iOS"
+            --scheme "ARKitPoseStreamer"
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/xcarchive/*.xcarchive
