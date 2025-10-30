@@ -4,14 +4,56 @@ workflows:
     environment:
       xcode: latest
     scripts:
-      - name: Generate Xcode project  # <-- ADD THIS SCRIPT
+      - name: Create export options
         script: | 
-          swift package generate-xcodeproj
-      - name: Build iOS app
+          # This step creates the export-options.plist file on the build server.
+          # This file is REQUIRED by xcodebuild to create an .ipa.
+          # We are using the bundle ID 'com.mmaarrwa.ARKitPoseStreamer'
+          # from your Package.swift file.
+          
+          cat > "$CM_BUILD_DIR/export-options.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>ad-hoc</string> 
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>com.mmaarrwa.ARKitPoseStreamer</key>
+                  <string>Temporary Profile Name</string>
+              </dict>
+              <key>compileBitcode</key>
+              <false/>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>teamID</key>
+              <string>YOUR_TEAM_ID</string>
+          </dict>
+          </plist>
+          EOF
+          
+          echo "Created export-options.plist"
+
+      - name: Build archive
         script: |
-          xcode-project build-ipa \
-            --project "ARKitPoseStreamer.xcodeproj" \
-            --scheme "ARKitPoseStreamer"
+          # This is the new build command. It finds your 'ARKitPoseStreamer'
+          # scheme from your Package.swift and builds an archive.
+          xcodebuild archive \
+            -scheme "ARKitPoseStreamer" \
+            -archivePath "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive" \
+            -destination "generic/platform=iOS"
+
+      - name: Export .ipa
+        script: |
+          # This command takes the archive and packages it into the .ipa file.
+          xcodebuild -exportArchive \
+            -archivePath "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive" \
+            -exportPath "$CM_BUILD_DIR/build/ios/ipa" \
+            -exportOptionsPlist "$CM_BUILD_DIR/export-options.plist"
+            
     artifacts:
       - build/ios/ipa/*.ipa
-      - build/ios/xcarchive/*.xcarchive
+      - "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive"
