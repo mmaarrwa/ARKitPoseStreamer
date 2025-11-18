@@ -4,7 +4,7 @@ import SceneKit
 import simd
 import Combine
 
-final class ARManager: NSObject, ObservableObject, ARSessionDelegate { // Removed ARSCNViewDelegate, added ARSessionDelegate
+final class ARManager: NSObject, ObservableObject, ARSessionDelegate { 
     static let shared = ARManager()
 
     let sceneView: ARSCNView = {
@@ -16,13 +16,15 @@ final class ARManager: NSObject, ObservableObject, ARSessionDelegate { // Remove
 
     @Published var isStreaming: Bool = false
     @Published var statusText: String = "Idle"
+    
+    // ✅ NEW: Variable to hold the IP address from the UI
+    @Published var serverIP: String = "192.168.1.10" 
 
     private let network = NetworkManager.shared
     private var started = false
 
     private override init() {
         super.init()
-        // sceneView.delegate = self  // Remove if not using SceneKit rendering callbacks
         statusText = "Ready"
     }
 
@@ -36,7 +38,7 @@ final class ARManager: NSObject, ObservableObject, ARSessionDelegate { // Remove
         config.worldAlignment = .gravity
         config.planeDetection = []
         sceneView.session.run(config)
-        sceneView.session.delegate = self  // This now works because we conform to ARSessionDelegate
+        sceneView.session.delegate = self
         started = true
         statusText = "AR running"
     }
@@ -46,14 +48,15 @@ final class ARManager: NSObject, ObservableObject, ARSessionDelegate { // Remove
         DispatchQueue.main.async {
             self.statusText = self.isStreaming ? "Streaming" : "Stopped"
         }
+        
         if isStreaming {
-            network.start()
+            // ✅ CHANGED: Pass the stored IP address to the network manager
+            network.start(ipAddress: serverIP)
         } else {
             network.stop()
         }
     }
 
-    // ✅ CORRECT: Use ARSessionDelegate method instead of ARSCNViewDelegate
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         guard isStreaming else { return }
 

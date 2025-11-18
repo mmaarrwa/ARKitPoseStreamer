@@ -11,24 +11,39 @@ struct ContentView: View {
 
             VStack {
                 Spacer()
-                HStack {
+                
+                // NEW: Input Box for IP
+                VStack(spacing: 10) {
                     Text(arManager.statusText)
                         .padding(8)
                         .background(Color.black.opacity(0.5))
                         .foregroundColor(.white)
                         .cornerRadius(8)
-                    Spacer()
-                    Button(action: {
-                        arManager.toggleStreaming()
-                    }) {
-                        Text(arManager.isStreaming ? "Stop" : "Start")
-                            .padding(8)
-                            .background(arManager.isStreaming ? Color.red : Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+                    
+                    HStack {
+                        // Text Field to type IP
+                        TextField("Enter PC IP", text: $arManager.serverIP)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .frame(width: 150)
+                            .keyboardType(.numbersAndPunctuation) // Easy typing
+                            
+                        Button(action: {
+                            // Hide keyboard when clicked
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            arManager.toggleStreaming()
+                        }) {
+                            Text(arManager.isStreaming ? "Stop" : "Start")
+                                .padding(8)
+                                .background(arManager.isStreaming ? Color.red : Color.green)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
                     }
                 }
                 .padding()
+                .background(Color.black.opacity(0.3)) // Background for visibility
+                .cornerRadius(15)
+                .padding(.bottom, 20)
             }
         }
         .onAppear {

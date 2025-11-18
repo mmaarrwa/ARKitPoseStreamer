@@ -4,8 +4,7 @@ import Network
 final class NetworkManager {
     static let shared = NetworkManager()
 
-    // ***** CHANGE THESE BEFORE BUILDING *****
-    private var hostString: String = "192.168.1.19"
+    // We removed the hardcoded hostString property
     private let portNumber: UInt16 = 5005
 
     private var connection: NWConnection?
@@ -13,11 +12,15 @@ final class NetworkManager {
 
     private init() {}
 
-    func start() {
-        guard !isStarted else { return }
+    // ✅ CHANGED: Now accepts ipAddress as an argument
+    func start(ipAddress: String) {
+        // If already started, stop first to restart with new IP
+        if isStarted {
+            stop()
+        }
         
         // ✅ FIXED: Direct assignment since NWEndpoint.Host doesn't return Optional
-        let host = NWEndpoint.Host(hostString)
+        let host = NWEndpoint.Host(ipAddress)
         guard let port = NWEndpoint.Port(rawValue: portNumber) else {
             print("Invalid port")
             return
@@ -38,13 +41,14 @@ final class NetworkManager {
         connection = NWConnection(host: host, port: port, using: .udp)
         connection?.start(queue: .global())
         isStarted = true
-        print("NetworkManager started -> \(hostString):\(portNumber)")
+        print("NetworkManager started -> \(ipAddress):\(portNumber)")
     }
 
     func stop() {
         connection?.cancel()
         connection = nil
         isStarted = false
+        print("NetworkManager stopped")
     }
 
     func sendPose(_ pose: [String: Any]) {

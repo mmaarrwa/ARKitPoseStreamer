@@ -6,31 +6,32 @@ workflows:
     scripts:
       - name: Build archive
         script: |
-          # This step builds the app and creates the .xcarchive
-          # This does not require any code signing.
+          # Build the app
           xcodebuild archive \
             -scheme "ARKitPoseStreamer" \
             -archivePath "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive" \
             -destination "generic/platform=iOS"
 
-      - name: Create unsigned .ipa
+      - name: Create valid .ipa
         script: |
-          # This step finds the built .app file inside the archive,
-          # puts it into a "Payload" folder, and zips it
-          # into the final .ipa file. This .ipa is unsigned.
+          # Define paths for clarity
+          IPA_DIR="$CM_BUILD_DIR/build/ios/ipa"
+          PAYLOAD_DIR="$IPA_DIR/Payload"
+          APP_BUNDLE="$PAYLOAD_DIR/ARKitPoseStreamer.app"
           
-          # 1. Create the Payload directory
-          mkdir -p "$CM_BUILD_DIR/build/ios/ipa/Payload"
+          # 1. Create the Payload directory structure
+          mkdir -p "$PAYLOAD_DIR"
           
-          # 2. Copy the .app from the archive into the Payload dir
-          cp -r "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive/Products/Applications/ARKitPoseStreamer.app" "$CM_BUILD_DIR/build/ios/ipa/Payload/"
+          # 2. Copy the built app into the Payload folder
+          cp -R "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive/Products/Applications/ARKitPoseStreamer.app" "$PAYLOAD_DIR/"
           
-          # 3. Go into the output directory
-          cd "$CM_BUILD_DIR/build/ios/ipa"
+          # 3. CRITICAL FIX: Manually overwrite the Info.plist inside the app
+          # This ensures AltStore finds the valid ID and version we just created.
+          cp "$CM_BUILD_DIR/Info.plist" "$APP_BUNDLE/Info.plist"
           
-          # 4. Zip the Payload folder into an .ipa file
+          # 4. Zip it all up into the .ipa file
+          cd "$IPA_DIR"
           zip -r "ARKitPoseStreamer.ipa" "Payload"
             
     artifacts:
-      # This tells Codemagic where to find the final .ipa file
       - build/ios/ipa/*.ipa
