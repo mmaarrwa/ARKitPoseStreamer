@@ -16,7 +16,6 @@
     <string>APPL</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
-
     <key>NSCameraUsageDescription</key>
     <string>Camera required for AR tracking</string>
     <key>UIRequiredDeviceCapabilities</key>

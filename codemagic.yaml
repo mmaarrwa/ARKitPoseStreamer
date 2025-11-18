@@ -6,30 +6,41 @@ workflows:
     scripts:
       - name: Build archive
         script: |
-          # Build the app
+          # Build the executable
           xcodebuild archive \
             -scheme "ARKitPoseStreamer" \
             -archivePath "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive" \
             -destination "generic/platform=iOS"
 
-      - name: Create valid .ipa
+      - name: Construct Manual .ipa
         script: |
-          # Define paths for clarity
+          # Define paths
           IPA_DIR="$CM_BUILD_DIR/build/ios/ipa"
           PAYLOAD_DIR="$IPA_DIR/Payload"
           APP_BUNDLE="$PAYLOAD_DIR/ARKitPoseStreamer.app"
           
-          # 1. Create the Payload directory structure
-          mkdir -p "$PAYLOAD_DIR"
+          # 1. Find the binary file inside the archive
+          # It might be in usr/local/bin because it's an executable
+          BINARY_SOURCE=$(find "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive" -name "ARKitPoseStreamer" -type f | head -n 1)
           
-          # 2. Copy the built app into the Payload folder
-          cp -R "$CM_BUILD_DIR/ARKitPoseStreamer.xcarchive/Products/Applications/ARKitPoseStreamer.app" "$PAYLOAD_DIR/"
+          if [ -z "$BINARY_SOURCE" ]; then
+            echo "Error: Could not find the compiled binary!"
+            exit 1
+          fi
           
-          # 3. CRITICAL FIX: Manually overwrite the Info.plist inside the app
-          # This ensures AltStore finds the valid ID and version we just created.
+          echo "Found binary at: $BINARY_SOURCE"
+
+          # 2. Create the Payload and .app folder structure manually
+          mkdir -p "$APP_BUNDLE"
+          
+          # 3. Move the binary into the .app folder
+          cp "$BINARY_SOURCE" "$APP_BUNDLE/ARKitPoseStreamer"
+          
+          # 4. Copy the Info.plist into the .app folder
+          # We assume Info.plist is in the root directory
           cp "$CM_BUILD_DIR/Info.plist" "$APP_BUNDLE/Info.plist"
           
-          # 4. Zip it all up into the .ipa file
+          # 5. Zip it into an .ipa
           cd "$IPA_DIR"
           zip -r "ARKitPoseStreamer.ipa" "Payload"
             
